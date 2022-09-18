@@ -3,6 +3,7 @@ import configparser
 from curses import meta
 import os, re, sys
 from typing import Optional, Tuple
+from venv import create
 from xmlrpc.client import ResponseError
 from PySide2.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox
 
@@ -10,15 +11,14 @@ from ui_buildform import Ui_BuildForm
 
 from dokuwiki import DokuWikiError
 
-from zim_tools import is_zim_file, zim_pagepath_regex, zim_pagepath_to_filepath
-from json_list_media import json_list_media
+from zim_tools import is_zim_file, zim_pagepath_regex, zim_pagepath_to_filepath, create_pdf_from_json
+from print_media import print_media
 from buildform_helpers import get_config, get_config_filepath, get_credentials, get_notebook_folder, get_notebook_name, catch_value_error, quote, get_project_name
 from zimwiki_to_json import zimwiki_to_json
-from json_to_dokuwiki import json_to_dokuwiki
+from prepare_for_dokuwiki import json_to_dokuwiki
 from zim_pages_selector import ZimPagesSelector
 from upload_dokuwiki import upload_files_to_dokuwiki, delete_files_from_dokuwiki
 from pathlib import Path
-import pandoc
 from configparser import ConfigParser
 from argparse import ArgumentParser
 import subprocess
@@ -100,7 +100,7 @@ class BuildForm(QWidget):
         json_filepaths = [notebook_folder / zimfile.with_suffix('.json') for zimfile in filepaths]
         json_files = [zimwiki_to_json(filepath, content, notebook_folder) for filepath, content in zip(filepaths, zimwiki_files)]
 
-        media_filepaths = json_list_media(json_filepaths)
+        media_filepaths = print_media(json_filepaths)
         media_files = []
         for filepath in media_filepaths:
             with open(notebook_folder / filepath, 'rb') as f:
@@ -130,7 +130,7 @@ class BuildForm(QWidget):
         filepaths = [Path(self.ui.pagepath_listWidget.item(i).text()) for i in range(lwlen)]
         json_filepaths = [notebook_folder / zimfile.with_suffix('.json') for zimfile in filepaths]
 
-        media_filepaths = json_list_media(json_filepaths)
+        media_filepaths = print_media(json_filepaths)
         
         credentials = get_credentials(self)
         try:
@@ -159,13 +159,11 @@ class BuildForm(QWidget):
         json_files = [zimwiki_to_json(filepath, content, notebook_folder) for filepath, content in zip(filepaths, zimwiki_files)]
 
         json_dicts = [json.loads(json_file) for json_file in json_files]
-        merged_json_dict = json_dicts[0]
-        for i in range(1, len(json_dicts)):
+        merged_json_dict = {'pandoc-api-version': json_dicts[0]['pandoc-api-version'], 'meta': {}, 'blocks': []}
+        for i in range(0, len(json_dicts)):
             merged_json_dict['blocks'].append({"t":"RawBlock","c":["tex","\\newpage"]})
             for block in json_dicts[i]['blocks']:
                 merged_json_dict['blocks'].append(block)
-        doc = pandoc.read(json.dumps(merged_json_dict), format='json')
-
         pdf_options = [
             '--metadata', 'title:' + self.ui.title_lineEdit.text(),
             '--metadata', 'author:' + self.ui.author_lineEdit.text(),
@@ -176,11 +174,12 @@ class BuildForm(QWidget):
             '--metadata', 'block-headings:true',
             '--metadata', 'document-class:report'
         ]
+
         if self.ui.table_of_contents_checkBox.isChecked():
             pdf_options.append('--table-of-contents')
 
         try:
-            pdf_content = pandoc.write(doc, format='pdf', options=pdf_options)
+            pdf_content = create_pdf_from_json(json.dumps(merged_json_dict), pdf_options)
         except:
             QMessageBox.information(self, 'Failure', 'Could not generate the pdf.')
             return

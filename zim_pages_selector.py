@@ -69,8 +69,8 @@ class ZimPagesSelector(QWidget):
         self.parent.ui.pagepath_listWidget.clear()
         if selection_mode == self.ui.listView.SingleSelection:
             selected_filepath = Path(selected_indexes[-1].data())
-            page_dependencies = get_page_dependencies([filepath_to_zim_pagepath(selected_filepath)], 'filepath', self.notebook_folder)
-            self.parent.ui.pagepath_listWidget.addItems([str(dependency) for dependency in page_dependencies])
+            page_dependencies = get_page_dependencies([filepath_to_zim_pagepath(selected_filepath)], self.notebook_folder, self.notebook_folder)
+            self.parent.ui.pagepath_listWidget.addItems([str(dependency.relative_to(self.notebook_folder)) for dependency in page_dependencies])
         else:
             self.parent.ui.pagepath_listWidget.addItems(index.data() for index in selected_indexes)
         

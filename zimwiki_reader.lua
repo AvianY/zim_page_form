@@ -78,18 +78,20 @@ end
 
 -- Grammar
 G = P{ "Doc",
-  Doc = Ct(V"Block"^0)
-      / pandoc.Pandoc ;
+  Doc = Ct(V"Meta"^1)
+      * Ct(V"Block"^0)
+      / function(metadata, blocks)
+	      return pandoc.Pandoc(blocks, metadata[1])
+      end ;
   Block = blankline^0
-        * ( V"Ignore"
-		  + V"Header"
+        * ( V"Header"
           + V"HorizontalRule"
-		  + V"IncludeCode"
+	  + V"IncludeCode"
           + V"CodeBlock"
           + V"CodeBlockPlugin"
           + V"List"
           + V"Table"
-		  + V"RawBlock"
+	  + V"RawBlock"
           + V"Para");
   Para = Ct((V"Inline")^1)
        * newline
@@ -273,10 +275,17 @@ G = P{ "Doc",
          * Ct((V"Inline" -P"**")^1)
          * P"**"
          / pandoc.Strong ;
-  Ignore = (P"Content-Type: text/x-zim-wiki" * newline)
-		 * (P"Wiki-Format: zim 0.6" * newline)
-		 * (P"Creation-Date: " * (1 - newline)^1)^-1
+  Meta = (P"Content-Type: text/x-zim-wiki" * newline)
+		 * (P"Wiki-Format: zim " * C((1 - newline)^1) * newline)
+		 * (P"Creation-Date: " * C((1 - newline)^1))^-1
 		 * newline
+		 / function(zim_version_string, creation_date_string)
+			 return pandoc.Meta({
+				 zim_version=pandoc.MetaString(zim_version_string),
+				 creation_date=pandoc.MetaString(creation_date_string),
+				 source_files=PANDOC_STATE.input_files
+			 })
+		 end ;
 }
 
 function Reader(input, reader_options)

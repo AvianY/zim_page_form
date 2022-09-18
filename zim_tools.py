@@ -1,7 +1,8 @@
 import configparser
-import os, re, pandoc
+import os, re
 import sys
 from pathlib import Path
+import subprocess
 
 from typing import Optional, Tuple
 from configparser import ConfigParser
@@ -36,8 +37,11 @@ subrelative_link = link that refers to the subpage of the page it is in - starts
 relative_link = link that refers to the most distant ancestor page that has the same initial name in common - it is convoluted ... -
 '''
 
-def zimlink_to_pagepath_section(link: str, source_filepath: Optional[Path], notebook_folder) -> Tuple[str, str]:
-    joining_colon = '' if source_filepath is None else ':'
+def zimlink_to_pagepath_section(link: str, anchor_filepath: Path, notebook_folder: Path) -> Tuple[str, str]:
+    if anchor_filepath.is_absolute():
+        anchor_filepath = anchor_filepath.relative_to(notebook_folder)
+
+    joining_colon = '' if anchor_filepath == Path() else ':'
 
     pagepath: str
     section: Optional[str] = None
@@ -52,10 +56,9 @@ def zimlink_to_pagepath_section(link: str, source_filepath: Optional[Path], note
         pagepath = link
     elif link[0] == '+': # subrelative link
         link = link[1:]
-        pagepath = filepath_to_zim_pagepath(source_filepath) + joining_colon + link
+        pagepath = filepath_to_zim_pagepath(anchor_filepath) + joining_colon + link
     else: # relative link
-        source_dir = Path() if source_filepath is None else source_filepath
-        relative_path = find_first_relative_filepath(source_dir, zim_pagepath_to_filepath(link), notebook_folder)
+        relative_path = find_first_relative_filepath(anchor_filepath, zim_pagepath_to_filepath(link), notebook_folder)
         pagepath = filepath_to_zim_pagepath(relative_path)
     
     return pagepath, section
@@ -95,12 +98,50 @@ def find_zim_pagepaths(root):
             result.append(filepath)
     return result
 
-def get_links(filename, zim_pages_only=False, reader_path='./'):
+def is_zim_notebook_folder(folderpath: Path):
+    try:
+        parser = configparser.ConfigParser()    
+        parser.read(folderpath / 'notebook.zim')
+        if 'Notebook' in parser and 'name' in parser['Notebook']:
+            return True
+    except:
+        pass
+    return False
+
+def find_notebook_parent_folder(path: Path):
+    if not path.is_file() and is_zim_notebook_folder(path):
+        return path
+    for parent_folder in path.parents:
+        if is_zim_notebook_folder(parent_folder):
+            return Path(parent_folder)
+    return None
+
+def script_dir():
+    return Path(os.path.dirname(os.path.abspath(__file__)))
+
+def zim_filepath_to_json(filepath, filtered=True):
+    parse_zimwiki_to_json = ['pandoc', '-f', 'zimwiki_reader.lua', '-t', 'json', str(filepath)]
+    filters = [
+        '--filter', './include_code_blocks.py',
+        '--filter', './expand_zim_links.py'
+    ] if filtered else []
+    p = subprocess.run(parse_zimwiki_to_json + filters, capture_output=True, cwd=str(script_dir()))
+    return p.stdout.decode()
+
+def get_links_from_json(json, zim_pages_only=False):
+    p = subprocess.run(['python3', 'print_zim_links.py'], input=json.encode(), capture_output=True, cwd=str(script_dir()))
     result = []
-    with open(filename, 'r') as f:
-        parsed = pandoc.read(f.read(), format=os.path.join(reader_path, 'zimwiki_reader.lua'))
-        for elem in pandoc.iter(parsed):
-            if isinstance(elem, pandoc.types.Link):
-                if zim_pages_only and not zim_pagelink_regex.match(elem[2][0]): continue
-                result.append(elem[2][0])
+    for link in p.stdout.decode().split('\n'):
+        if zim_pages_only and zim_pagelink_regex.match(link):
+            result.append(link)
+        elif not zim_pages_only:
+            result.append(link)
     return result
+
+def create_pdf_from_json(json, pdf_options):
+    p = subprocess.run(['pandoc', '-f', 'json', '-t', 'pdf'] + pdf_options, input=json.encode(), capture_output=True)
+    return p.stdout.decode()
+
+def get_links_from_zim_filepath(filepath, zim_pages_only=False):
+    json = zim_filepath_to_json(filepath, filtered=False)
+    return get_links_from_json(json, zim_pages_only)

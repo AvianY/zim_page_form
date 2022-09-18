@@ -1,27 +1,29 @@
-import pandoc
-
-import argparse
-import os, subprocess
+#!/usr/bin/env python3
+ 
+import os, sys, io
 from pathlib import Path
 from typing import List
 
-def json_list_media(json_files: List[Path]) -> List[Path]:
-    result = []
-    for filepath in json_files:
-        with open(filepath, 'r') as f:
-            doc = pandoc.read(f.read(), format='json')
+from pandocfilters import applyJSONFilters, walk
 
-            for elem in pandoc.iter(doc):
-                if isinstance(elem, pandoc.types.Image):
-                    result.append(Path(elem[2][0]))
-    return result
+def print_media(key, value, format, meta) -> List[Path]:
+    if key == 'Image':
+        print(value[2][0])
+    return None
+
+def get_block_links(key, value, format, meta):
+    if key == 'Para':
+        return walk(value, print_media, format, meta)
+    return None
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='get all the media contained in the provided json files')
-    parser.add_argument('filepaths', nargs='+')
+    input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
+    source = input_stream.read()
+    if len(sys.argv) > 1:
+        format = sys.argv[1]
+    else:
+        format = ""
 
-    parsed = parser.parse_args()
+    applyJSONFilters([print_media], source, format).split(os.linesep)
 
-    media = json_list_media(parsed.filepaths)
-    for medium in media:
-        print(medium)
+    
