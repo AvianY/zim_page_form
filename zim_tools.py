@@ -145,3 +145,16 @@ def create_pdf_from_json(json, pdf_options):
 def get_links_from_zim_filepath(filepath, zim_pages_only=False):
     json = zim_filepath_to_json(filepath, filtered=False)
     return get_links_from_json(json, zim_pages_only)
+
+def get_media_from_json(json):
+    # does not work on raw parsed zimwiki (has to be reanchored)
+    p = subprocess.run(['python3', 'json_list_media.py'], input=json.encode(), capture_output=True, cwd=str(script_dir()))
+    return [Path(link) for link in p.stdout.decode().split('\n') if link != '']
+
+def json_to_dokuwiki(json):
+    # does not work on raw parsed zimwiki
+    filters = [
+        '--filter', 'prepare_for_dokuwiki.py'
+    ]
+    p = subprocess.run(['pandoc', '-f', 'json', '-t', 'dokuwiki'] + filters, input=json.encode(), capture_output=True, cwd=str(script_dir()))
+    return p.stdout.decode()

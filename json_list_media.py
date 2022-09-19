@@ -11,7 +11,7 @@ def print_media(key, value, format, meta) -> List[Path]:
         print(value[2][0])
     return None
 
-def get_block_links(key, value, format, meta):
+def get_block_media(key, value, format, meta):
     if key == 'Para':
         return walk(value, print_media, format, meta)
     return None
@@ -24,6 +24,6 @@ if __name__ == '__main__':
     else:
         format = ""
 
-    applyJSONFilters([print_media], source, format).split(os.linesep)
+    applyJSONFilters([get_block_media], source, format).split(os.linesep)
 
     

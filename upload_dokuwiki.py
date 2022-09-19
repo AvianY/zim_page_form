@@ -26,20 +26,20 @@ def read_credentials(filename):
 def upload_files_to_dokuwiki(pages, media, credentials):
     wiki = dokuwiki.DokuWiki(credentials['server'], credentials['username'], credentials['password'])
     
-    for filename in pages:
-        wiki.pages.set(filepath_to_zim_pagepath(filename), pages[filename])
+    for pagepath in pages:
+        wiki.pages.set(pagepath, pages[pagepath])
 
-    for filename in media:
-        wiki.medias.set(filepath_to_zim_pagepath(filename, keepSuffix=True), media[filename])
+    for mediapath in media:
+        wiki.medias.set(mediapath, media[mediapath])
 
 def delete_files_from_dokuwiki(pagenames, medianames, credentials):
     wiki = dokuwiki.DokuWiki(credentials['server'], credentials['username'], credentials['password'])
 
     for filename in pagenames:
-        wiki.pages.delete(filepath_to_zim_pagepath(filename))
+        wiki.pages.delete(filename)
 
     for filename in medianames:
-        wiki.medias.delete(filepath_to_zim_pagepath(filename, keepSuffix=True))
+        wiki.medias.delete(filename)
 
 
 if __name__ == '__main__':

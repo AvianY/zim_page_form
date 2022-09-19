@@ -28,7 +28,7 @@ def expand_zim_links(key, value, format, meta):
         # identifier, classes, attributes = attr
 
         for i, attr_pair in enumerate(value[0][2]):
-            if attr_pair[2][0] == 'href':
+            if attr_pair[0] == 'href':
                 link = unquote(attr_pair[1])
                 value[0][2][i] = ('href', zimlink_to_pagepath(link, source_filepath, notebook_folder))
 
