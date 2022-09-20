@@ -122,14 +122,14 @@ def script_dir():
 def zim_filepath_to_json(filepath, filtered=True):
     parse_zimwiki_to_json = ['pandoc', '-f', 'zimwiki_reader.lua', '-t', 'json', str(filepath)]
     filters = [
-        '--filter', 'filters/include_code_blocks.py',
-        '--filter', 'filters/expand_zim_links.py'
+        '--filter', './include_code_blocks.py',
+        '--filter', './expand_zim_links.py'
     ] if filtered else []
     p = subprocess.run(parse_zimwiki_to_json + filters, capture_output=True, cwd=str(script_dir()))
     return p.stdout.decode()
 
 def get_links_from_json(json, zim_pages_only=False):
-    p = subprocess.run(['python3', 'printers/print_zim_links.py'], input=json.encode(), capture_output=True, cwd=str(script_dir()))
+    p = subprocess.run(['python3', 'print_zim_links.py'], input=json.encode(), capture_output=True, cwd=str(script_dir()))
     result = []
     for link in p.stdout.decode().split('\n'):
         if zim_pages_only and zim_pagelink_regex.match(link):
@@ -148,13 +148,13 @@ def get_links_from_zim_filepath(filepath, zim_pages_only=False):
 
 def get_media_from_json(json):
     # does not work on raw parsed zimwiki (has to be reanchored)
-    p = subprocess.run(['python3', 'printers/json_list_media.py'], input=json.encode(), capture_output=True, cwd=str(script_dir()))
+    p = subprocess.run(['python3', 'json_list_media.py'], input=json.encode(), capture_output=True, cwd=str(script_dir()))
     return [Path(link) for link in p.stdout.decode().split('\n') if link != '']
 
 def json_to_dokuwiki(json):
     # does not work on raw parsed zimwiki
     filters = [
-        '--filter', 'filters/prepare_for_dokuwiki.py'
+        '--filter', 'prepare_for_dokuwiki.py'
     ]
     p = subprocess.run(['pandoc', '-f', 'json', '-t', 'dokuwiki'] + filters, input=json.encode(), capture_output=True, cwd=str(script_dir()))
     return p.stdout.decode()
