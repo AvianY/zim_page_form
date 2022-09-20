@@ -7,3 +7,4 @@ launch.json
 build/
 dist/
 main.spec
+venv/
