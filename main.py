@@ -1,5 +1,4 @@
 # This Python file uses the following encoding: utf-8
-from curses import meta
 import os, re, sys
 from typing import Optional
 from venv import create
