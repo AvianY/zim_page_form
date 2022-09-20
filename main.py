@@ -1,13 +1,12 @@
 # This Python file uses the following encoding: utf-8
-import configparser
 from curses import meta
 import os, re, sys
-from typing import Optional, Tuple
+from typing import Optional
 from venv import create
 from xmlrpc.client import ResponseError
 from PySide2.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox
-
-from ui_buildform import Ui_BuildForm
+from PySide2.QtUiTools import QUiLoader
+from PySide2.QtCore import QFile
 
 from dokuwiki import DokuWikiError
 
@@ -22,14 +21,14 @@ import itertools
 import json
 
 
+
 def flatten(l):
     return [item for sublist in l for item in sublist]
 
 class BuildForm(QWidget):
     def __init__(self, notebook_folder, filepaths, config: ConfigParser, project_name):
         super(BuildForm, self).__init__()
-        self.ui = Ui_BuildForm()
-        self.ui.setupUi(self)
+        self.ui = self.load_ui()
 
         self.select_notebook_folder(notebook_folder)
         
@@ -54,6 +53,16 @@ class BuildForm(QWidget):
 
         if self.ui.pagepath_listWidget.count() == 0:
             self.select_pages(filepaths)
+
+    def load_ui(self):
+        loader = QUiLoader()
+        path = os.path.join(os.path.dirname(__file__), "form.ui")
+        ui_file = QFile(path)
+        ui_file.open(QFile.ReadOnly)
+        ui = loader.load(ui_file, self)
+        ui_file.close()
+        return ui
+
 
     @catch_value_error
     def project_changed(self, index):

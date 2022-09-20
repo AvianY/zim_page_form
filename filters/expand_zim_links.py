@@ -4,7 +4,7 @@ from pathlib import Path
 
 from zim_tools import zimlink_to_pagepath, zim_pagelink_regex, find_notebook_parent_folder
 from urllib.parse import unquote
-from pandocfilters import toJSONFilter, walk, Link, Image
+from pandocfilters import toJSONFilter, Link, Image
 
 
 def reanchor_file(relative_filepath, source_file, relative_to=None):

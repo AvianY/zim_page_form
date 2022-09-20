@@ -1,8 +1,10 @@
-import os, re, sys
-from ui_zim_pages_selector import Ui_Form
+import os
 from PySide2.QtWidgets import QWidget, QMessageBox
 from PySide2.QtGui import QStandardItemModel, QStandardItem
 from PySide2.QtCore import Qt
+
+from PySide2.QtUiTools import QUiLoader
+from PySide2.QtCore import QFile
 
 from pathlib import Path
 
@@ -13,8 +15,7 @@ from get_page_dependencies import get_page_dependencies
 class ZimPagesSelector(QWidget):
     def __init__(self, parent, notebook_folder):
         super(ZimPagesSelector, self).__init__()
-        self.ui = Ui_Form()
-        self.ui.setupUi(self)
+        self.ui = self.load_ui()
 
         self.parent = parent
         self.notebook_folder = notebook_folder
@@ -32,6 +33,15 @@ class ZimPagesSelector(QWidget):
             item.setFlags(item.flags() ^ Qt.ItemIsDragEnabled)
             self.model.appendRow(item)
         self.ui.listView.setModel(self.model)
+
+    def load_ui(self):
+        loader = QUiLoader()
+        path = os.path.join(os.path.dirname(__file__), "zim_pages_selector.ui")
+        ui_file = QFile(path)
+        ui_file.open(QFile.ReadOnly)
+        ui = loader.load(ui_file, self)
+        ui_file.close()
+        return ui
 
     def set_multiple_select(self):
         self.ui.listView.setSelectionMode(self.ui.listView.MultiSelection)

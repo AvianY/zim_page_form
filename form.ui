@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>756</width>
-    <height>656</height>
+    <width>783</width>
+    <height>662</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -23,7 +23,13 @@
    <property name="leftMargin">
     <number>20</number>
    </property>
+   <property name="topMargin">
+    <number>20</number>
+   </property>
    <property name="rightMargin">
+    <number>20</number>
+   </property>
+   <property name="bottomMargin">
     <number>20</number>
    </property>
    <item row="24" column="0" colspan="3">
