@@ -160,7 +160,7 @@ class BuildForm(QWidget):
 
         filepaths = [Path(self.ui.pagepath_listWidget.item(i).text()) for i in range(lwlen)]
 
-        json_files = [zim_filepath_to_json(filepath) for filepath in filepaths]
+        json_files = [zim_filepath_to_json(notebook_folder / filepath) for filepath in filepaths]
 
         json_dicts = [json.loads(json_file) for json_file in json_files]
         merged_json_dict = {'pandoc-api-version': json_dicts[0]['pandoc-api-version'], 'meta': {}, 'blocks': []}
@@ -183,14 +183,10 @@ class BuildForm(QWidget):
             pdf_options.append('--table-of-contents')
 
         try:
-            pdf_content = create_pdf_from_json(json.dumps(merged_json_dict), pdf_options)
+            create_pdf_from_json(json.dumps(merged_json_dict), notebook_folder / 'documentation.pdf', pdf_options)
         except:
             QMessageBox.information(self, 'Failure', 'Could not generate the pdf.')
             return
-
-
-        with open(notebook_folder / 'documentation.pdf', 'wb') as f:
-            f.write(pdf_content)
         QMessageBox.information(self, 'Success', 'The pdf was successfully created.')
 
     @catch_value_error

@@ -138,9 +138,8 @@ def get_links_from_json(json, zim_pages_only=False):
             result.append(link)
     return result
 
-def create_pdf_from_json(json, pdf_options):
-    p = subprocess.run(['pandoc', '-f', 'json', '-t', 'pdf'] + pdf_options, input=json.encode(), capture_output=True)
-    return p.stdout.decode()
+def create_pdf_from_json(json, target_file, pdf_options):
+    p = subprocess.run(['pandoc', '-f', 'json', '-t', 'pdf', '-o', target_file] + pdf_options, input=json.encode(), capture_output=True)
 
 def get_links_from_zim_filepath(filepath, zim_pages_only=False):
     json = zim_filepath_to_json(filepath, filtered=False)
