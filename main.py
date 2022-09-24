@@ -56,7 +56,7 @@ class BuildForm(QWidget):
 
     def load_ui(self):
         loader = QUiLoader()
-        path = os.path.join(os.path.dirname(__file__), "form.ui")
+        path = os.path.join(os.path.dirname(__file__), "build_form.ui")
         ui_file = QFile(path)
         ui_file.open(QFile.ReadOnly)
         ui = loader.load(ui_file, self)
@@ -272,7 +272,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     if parsed.notebook_folder is None:
-        notebook_folder = Path(QFileDialog.getExistingDirectory(None, 'Select Notebook folder'))
+        notebook_folder = Path(QFileDialog.getExistingDirectory(None, 'Select Notebook folder', dir=str(Path.home() / 'Notebooks')))
     else:
         notebook_folder = Path(parsed.notebook_folder)
 
