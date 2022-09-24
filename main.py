@@ -9,7 +9,8 @@ from PySide2.QtCore import QFile
 
 from dokuwiki import DokuWikiError
 
-from zim_tools import is_zim_file, zim_pagepath_regex, zim_pagepath_to_filepath, create_pdf_from_json, zim_filepath_to_json, get_media_from_json, json_to_dokuwiki, filepath_to_zim_pagepath
+from zim_tools import is_zim_file, zim_pagepath_regex, zim_pagepath_to_filepath,  filepath_to_zim_pagepath
+from pandoc_tools import create_pdf_from_json, zim_filepath_to_json, get_media_from_json, json_to_dokuwiki
 from buildform_helpers import get_config, get_config_filepath, get_credentials, get_notebook_folder, catch_value_error, get_project_name
 from zim_pages_selector import ZimPagesSelector
 from upload_dokuwiki import upload_files_to_dokuwiki, delete_files_from_dokuwiki
@@ -25,7 +26,7 @@ def flatten(l):
     return [item for sublist in l for item in sublist]
 
 class BuildForm(QWidget):
-    def __init__(self, notebook_folder, filepaths, config: ConfigParser, project_name):
+    def __init__(self, notebook_folder, filepaths, config: dict, project_name):
         super(BuildForm, self).__init__()
         self.ui = self.load_ui()
 
@@ -102,10 +103,11 @@ class BuildForm(QWidget):
 
         json_files = [zim_filepath_to_json(notebook_folder / filepath) for filepath in filepaths]
 
-        media_filepaths = list(set(flatten(get_media_from_json(content) for content in json_files)))
+        media_filepaths = list(set(flatten(get_media_from_json(json_file) for json_file in json_files)))
+        media_absolute_filepaths = [notebook_folder / media_filepath for media_filepath in media_filepaths]
         media_pagepaths = [filepath_to_zim_pagepath(filepath, keepSuffix=True) for filepath in media_filepaths]
         media_files = []
-        for filepath in media_filepaths:
+        for filepath in media_absolute_filepaths:
             with open(notebook_folder / filepath, 'rb') as f:
                 media_files.append(f.read())
 
@@ -136,7 +138,7 @@ class BuildForm(QWidget):
 
         json_files = [zim_filepath_to_json(notebook_folder / filepath) for filepath in filepaths]
 
-        media_filepaths = list(set(flatten(get_media_from_json(content) for content in json_files)))
+        media_filepaths = list(set(flatten(get_media_from_json(json_file) for json_file in json_files)))
         media_pagepaths = [filepath_to_zim_pagepath(filepath, keepSuffix=True) for filepath in media_filepaths]
         dokuwiki_pagepaths = [filepath_to_zim_pagepath(filepath) for filepath in filepaths]
 
@@ -160,9 +162,8 @@ class BuildForm(QWidget):
 
         filepaths = [Path(self.ui.pagepath_listWidget.item(i).text()) for i in range(lwlen)]
 
-        json_files = [zim_filepath_to_json(notebook_folder / filepath) for filepath in filepaths]
+        json_dicts = [zim_filepath_to_json(notebook_folder / filepath) for filepath in filepaths]
 
-        json_dicts = [json.loads(json_file) for json_file in json_files]
         merged_json_dict = {'pandoc-api-version': json_dicts[0]['pandoc-api-version'], 'meta': {}, 'blocks': []}
         for i in range(0, len(json_dicts)):
             merged_json_dict['blocks'].append({"t":"RawBlock","c":["tex","\\newpage"]})
@@ -183,7 +184,7 @@ class BuildForm(QWidget):
             pdf_options.append('--table-of-contents')
 
         try:
-            create_pdf_from_json(json.dumps(merged_json_dict), notebook_folder / 'documentation.pdf', pdf_options)
+            create_pdf_from_json(merged_json_dict, notebook_folder / 'documentation.pdf', pdf_options)
         except:
             QMessageBox.information(self, 'Failure', 'Could not generate the pdf.')
             return
@@ -197,10 +198,10 @@ class BuildForm(QWidget):
 
     def select_notebook_folder(self, folderpath: Optional[Path]=None):
         if not folderpath:
-            folderpath = QFileDialog.getExistingDirectory(self, 'Select Notebook folder')
+            folderpath = Path(QFileDialog.getExistingDirectory(self, 'Select Notebook folder'))
         if folderpath in [None, '']:
             return
-        if not (Path(folderpath) / 'notebook.zim').is_file():
+        if not (folderpath / 'notebook.zim').is_file():
             QMessageBox.warning(self, 'Not a zim notebook', 'Selected folder is not a zim notebook.')
             return
 
@@ -286,9 +287,9 @@ if __name__ == "__main__":
 
     config: dict = {}
     if os.path.isfile(config_filepath):
-        parser = ConfigParser()
-        parser.read(config_filepath)
-        config = {s:dict(parser.items(s)) for s in parser.sections()}
+        cparser = ConfigParser()
+        cparser.read(config_filepath)
+        config = {s:dict(cparser.items(s)) for s in cparser.sections()}
         
     filepaths = []
     for pagepath in parsed.pagepaths:

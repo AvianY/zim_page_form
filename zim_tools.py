@@ -3,15 +3,18 @@ import os, re
 import sys
 from pathlib import Path
 import subprocess
+from typing import List
 
-from typing import Optional, Tuple
-from configparser import ConfigParser
+import json
+
+from typing import List, Optional, Tuple
 
 zim_pagepath_regex = re.compile('^([^:#+/]+)(:[^:#+/]+)*$')
 
 zim_pagelink_regex = re.compile('^[:+]?([^:#+/]+)(:[^:#+/]+)*(#[^:#+/]+)?$')
 
 zim_extension_inline_code_regex = re.compile('^\[\[([^]|]*)\|CODE:([^]|]*)\]\]$')
+
 
 
 def find_first_relative_filepath(source_filepath: Path, relative_filepath: Path, notebook_folder: Path) -> Path:
@@ -37,7 +40,7 @@ subrelative_link = link that refers to the subpage of the page it is in - starts
 relative_link = link that refers to the most distant ancestor page that has the same initial name in common - it is convoluted ... -
 '''
 
-def zimlink_to_pagepath_section(link: str, anchor_filepath: Path, notebook_folder: Path) -> Tuple[str, str]:
+def zimlink_to_pagepath_section(link: str, anchor_filepath: Path, notebook_folder: Path) -> Tuple[str, Optional[str]]:
     if anchor_filepath.is_absolute():
         anchor_filepath = anchor_filepath.relative_to(notebook_folder)
 
@@ -67,10 +70,10 @@ def zimlink_to_pagepath(link, source_filepath, notebook_folder) -> str:
     return zimlink_to_pagepath_section(link, source_filepath, notebook_folder)[0]
 
 def zimlink_to_absolute_link(link, source_filepath, notebook_folder) -> str:
-    return ':' + zimlink_to_pagepath_section(link, source_filepath, notebook_folder)[0]
+    return ':' + zimlink_to_pagepath(link, source_filepath, notebook_folder)
 
-def zimlink_to_filepath(link, source_filepath, notebook_folder) -> str:
-    return zim_pagepath_to_filepath(zimlink_to_pagepath_section(link, source_filepath, notebook_folder)[0])
+def zimlink_to_filepath(link, source_filepath, notebook_folder) -> Path:
+    return zim_pagepath_to_filepath(zimlink_to_pagepath(link, source_filepath, notebook_folder))
 
 def zim_pagepath_to_filepath(pagepath: str) -> Path:
     slashed = pagepath.replace(':', '/') + '.txt'
@@ -84,8 +87,8 @@ def filepath_to_zim_pagepath(filename: Path, keepSuffix=False) -> str:
 
 def is_zim_file(filepath: Path) -> bool:
     if not filepath.is_file(): return False
-    with open(filepath, "r") as f:
-        if f.readline() == 'Content-Type: text/x-zim-wiki\n':
+    with open(filepath, "rb") as f:
+        if f.readline() == b'Content-Type: text/x-zim-wiki' + os.linesep.encode():
             return True
     return False
 
@@ -115,45 +118,3 @@ def find_notebook_parent_folder(path: Path):
         if is_zim_notebook_folder(parent_folder):
             return Path(parent_folder)
     return None
-
-def script_dir():
-    return Path(os.path.dirname(os.path.abspath(__file__)))
-
-def zim_filepath_to_json(filepath, filtered=True):
-    parse_zimwiki_to_json = ['pandoc', '-f', 'zimwiki_reader.lua', '-t', 'json', str(filepath)]
-    filters = [
-        '--filter', './include_code_blocks.py',
-        '--filter', './expand_zim_links.py'
-    ] if filtered else []
-    p = subprocess.run(parse_zimwiki_to_json + filters, capture_output=True, cwd=str(script_dir()))
-    return p.stdout.decode()
-
-def get_links_from_json(json, zim_pages_only=False):
-    p = subprocess.run(['python3', 'print_zim_links.py'], input=json.encode(), capture_output=True, cwd=str(script_dir()))
-    result = []
-    for link in p.stdout.decode().split('\n'):
-        if zim_pages_only and zim_pagelink_regex.match(link):
-            result.append(link)
-        elif not zim_pages_only:
-            result.append(link)
-    return result
-
-def create_pdf_from_json(json, target_file, pdf_options):
-    p = subprocess.run(['pandoc', '-f', 'json', '-t', 'pdf', '-o', target_file] + pdf_options, input=json.encode(), capture_output=True)
-
-def get_links_from_zim_filepath(filepath, zim_pages_only=False):
-    json = zim_filepath_to_json(filepath, filtered=False)
-    return get_links_from_json(json, zim_pages_only)
-
-def get_media_from_json(json):
-    # does not work on raw parsed zimwiki (has to be reanchored)
-    p = subprocess.run(['python3', 'json_list_media.py'], input=json.encode(), capture_output=True, cwd=str(script_dir()))
-    return [Path(link) for link in p.stdout.decode().split('\n') if link != '']
-
-def json_to_dokuwiki(json):
-    # does not work on raw parsed zimwiki
-    filters = [
-        '--filter', 'prepare_for_dokuwiki.py'
-    ]
-    p = subprocess.run(['pandoc', '-f', 'json', '-t', 'dokuwiki'] + filters, input=json.encode(), capture_output=True, cwd=str(script_dir()))
-    return p.stdout.decode()

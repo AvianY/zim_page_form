@@ -1,35 +1,40 @@
 #!/usr/bin/env python3
 
-import argparse
-from pathlib import Path
-
 import sys, io, os
-from functools import partial
 
-from pandocfilters import applyJSONFilters, walk
+from pandocfilters import walk, Str
+import json
 
 from urllib.parse import unquote
 
 
-# TODO: join get_inline_links with get_block_links
-def get_inline_links(key, value, format, meta):
+def reduce_links_to_strings(key, value, format, meta):
     if key == 'Link':
-        print(value[2][0])
+        return Str(value[2][0])
     elif key == 'Image':
         # attr, caption, image = elem
         # src, title = image
         # identifier, classes, attributes = attr
-
         for i, attr_pair in enumerate(value[0][2]):
             if attr_pair[0] == 'href':
-                print(unquote(value[0][2][i][1]))
-    return None
+                return Str(unquote(value[0][2][i][1]))
+    elif key == 'Para':
+        return walk(value, reduce_links_to_strings, format, meta)
+    else:
+        return []
 
-def get_block_links(key, value, format, meta):
-    if key == 'Para':
-        return walk(value, get_inline_links, format, meta)
-    return None
+def json_get_links(json_input: dict):
+    if 'meta' in json_input:
+        meta = json_input['meta']
+    elif json_input[0]:  # old API
+        meta = json_input[0]['unMeta']
+    else:
+        meta = {}
 
+    altered = walk(json_input, reduce_links_to_strings, format, meta)
+
+    return [str(block['c']) for block in altered['blocks']]
+    
 
 if __name__ == '__main__':
     input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
@@ -39,6 +44,8 @@ if __name__ == '__main__':
     else:
         format = ""
 
-    applyJSONFilters([get_block_links], source, format).split(os.linesep)
+    links = json_get_links(json.loads(source))
 
+    for link in links:
+        print(link)
     

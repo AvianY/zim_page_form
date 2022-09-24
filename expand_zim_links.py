@@ -2,9 +2,11 @@
 
 from pathlib import Path
 
+import sys, io
 from zim_tools import zimlink_to_pagepath, zim_pagelink_regex, find_notebook_parent_folder
 from urllib.parse import unquote
-from pandocfilters import toJSONFilter, Link, Image
+from pandocfilters import walk, Link, Image
+import json
 
 
 def reanchor_file(relative_filepath, source_file, relative_to=None):
@@ -33,10 +35,28 @@ def expand_zim_links(key, value, format, meta):
                 value[0][2][i] = ('href', zimlink_to_pagepath(link, source_filepath, notebook_folder))
 
         # NOTE: I don't know if this should be here. It's not a link...
-        value[2] = (reanchor_file(value[2][0], source_filepath, notebook_folder), '')
+        if not Path(value[2][0]).is_absolute():
+            value[2] = (reanchor_file(value[2][0], source_filepath, notebook_folder), '')
         return Image(*value)
     return None
 
-if __name__ == '__main__':
-    toJSONFilter(expand_zim_links)
+def json_expand_links(json_input: dict, format=''):
+    if 'meta' in json_input:
+        meta = json_input['meta']
+    elif json_input[0]:  # old API
+        meta = json_input[0]['unMeta']
+    else:
+        meta = {}
 
+    return walk(json_input, expand_zim_links, format, meta)
+
+if __name__ == '__main__':
+    input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
+    source = input_stream.read()
+    if len(sys.argv) > 1:
+        format = sys.argv[1]
+    else:
+        format = ""
+
+    sys.stdout.write(json.dumps(json_expand_links(json.loads(source), format)))
+    

@@ -4,7 +4,8 @@ from pathlib import Path
 
 from typing import List
 
-from zim_tools import is_zim_file, filepath_to_zim_pagepath, get_links_from_zim_filepath, zim_pagelink_regex, zimlink_to_pagepath, zim_pagepath_to_filepath
+from zim_tools import is_zim_file, filepath_to_zim_pagepath, zim_pagelink_regex, zimlink_to_pagepath, zim_pagepath_to_filepath
+from pandoc_tools import get_links_from_zim_filepath
 
 def norecursion(an=0,defret=[],initial=[]):
     """ Recursion/loop prevention function decorator
