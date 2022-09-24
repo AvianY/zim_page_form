@@ -175,7 +175,7 @@ class BuildForm(QWidget):
             '--metadata', 'date:' + self.ui.date_lineEdit.text(),
             '--metadata', 'keywords:' + self.ui.keywords_lineEdit.text(),
             '--metadata', 'lang:' + self.ui.languages_lineEdit.text(),
-            '--metadata', 'margin:' + self.ui.margin_lineEdit.text(),
+            '--metadata', 'geometry: ' + self.ui.margin_lineEdit.text(),
             '--metadata', 'block-headings:true',
             '--metadata', 'document-class:report'
         ]
@@ -184,7 +184,7 @@ class BuildForm(QWidget):
             pdf_options.append('--table-of-contents')
 
         try:
-            create_pdf_from_json(merged_json_dict, notebook_folder / 'documentation.pdf', pdf_options)
+            create_pdf_from_json(merged_json_dict, notebook_folder / 'documentation.pdf', pdf_options, str(notebook_folder))
         except:
             QMessageBox.information(self, 'Failure', 'Could not generate the pdf.')
             return
