@@ -280,11 +280,13 @@ G = P{ "Doc",
 		 * (P"Creation-Date: " * C((1 - newline)^1))^-1
 		 * newline
 		 / function(zim_version_string, creation_date_string)
-			 return pandoc.Meta({
-				 zim_version=pandoc.MetaString(zim_version_string),
-				 creation_date=pandoc.MetaString(creation_date_string),
-				 source_files=PANDOC_STATE.input_files
-			 })
+      result_table = {}
+      result_table["zim_version"] = pandoc.MetaString(zim_version_string)
+      result_table["source_files"] = PANDOC_STATE.input_files
+      if creation_date_string ~= nil then
+        result_table["creation_date"] = pandoc.MetaString(creation_date_string)
+      end
+      return pandoc.Meta(result_table)
 		 end ;
 }
 
