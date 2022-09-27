@@ -281,6 +281,9 @@ G = P{ "Doc",
 		 * newline
 		 / function(zim_version_string, creation_date_string)
       result_table = {}
+      if zim_version_string == nil then
+        error("The file is not a zim page. zim_version missing")
+      end
       result_table["zim_version"] = pandoc.MetaString(zim_version_string)
       result_table["source_files"] = PANDOC_STATE.input_files
       if creation_date_string ~= nil then
