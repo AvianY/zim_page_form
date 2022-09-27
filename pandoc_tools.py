@@ -7,6 +7,8 @@ import json
 
 from zim_tools import zim_pagelink_regex
 
+import shutil
+
 from expand_zim_links import json_expand_links
 from include_code_blocks import json_transform_rawblocks_to_codeblocks
 from print_zim_links import json_get_links
@@ -19,7 +21,8 @@ def script_dir():
 
 
 def zim_filepath_to_json(filepath, filtered=True):
-    p = subprocess.run(['pandoc', '-f', 'zimwiki_reader.lua', '-t', 'json', str(filepath)], capture_output=True, cwd=str(script_dir()))
+    p = subprocess.run([shutil.which('pandoc'), '-f', 'zimwiki_reader.lua', '-t', 'json', str(filepath)], capture_output=True, cwd=str(script_dir()))
+    print(p.stderr.decode())
     json_file = json.loads(p.stdout.decode())
     if filtered:
         json_file = json_transform_rawblocks_to_codeblocks(json_file)
@@ -43,7 +46,7 @@ def get_links_from_zim_filepath(filepath, zim_pages_only):
 
 def create_pdf_from_json(json_dict: dict, target_file, pdf_options, notebook_folder) -> None:
     json_file: str = json.dumps(json_dict)
-    p = subprocess.run(['pandoc', '-f', 'json', '-t', 'pdf', '-o', target_file] + pdf_options, input=json_file.encode(), cwd=notebook_folder)
+    p = subprocess.run(['pandoc', '-f', 'json', '-t', 'pdf', '--pdf-engine=xelatex', '-o', target_file] + pdf_options, input=json_file.encode(), cwd=notebook_folder)
     p.check_returncode()
 
 def get_media_from_json(json_input: dict) -> List[str]:
@@ -53,6 +56,6 @@ def get_media_from_json(json_input: dict) -> List[str]:
 def json_to_dokuwiki(json_input) -> str:
     # does not work on raw parsed zimwiki
     prepared_json = json.dumps(json_prepare_for_dokuwiki(json_input))
-    p = subprocess.run(['pandoc', '-f', 'json', '-t', 'dokuwiki'], input=prepared_json.encode(), capture_output=True, cwd=str(script_dir()))
+    p = subprocess.run([shutil.which('pandoc'), '-f', 'json', '-t', 'dokuwiki'], input=prepared_json.encode(), capture_output=True, cwd=str(script_dir()))
     return p.stdout.decode()
 
