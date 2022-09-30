@@ -11,7 +11,7 @@ from dokuwiki import DokuWikiError
 
 from zim_tools import is_zim_file, zim_pagepath_regex, zim_pagepath_to_filepath,  filepath_to_zim_pagepath
 from pandoc_tools import create_pdf_from_json, zim_filepath_to_json, get_media_from_json, json_to_dokuwiki
-from buildform_helpers import get_config, get_config_filepath, get_credentials, get_notebook_folder, catch_value_error, get_project_name
+from buildform_helpers import get_config, get_config_filepath, get_credentials, get_notebook_folder, catch_value_error, get_prefix, get_project_name
 from zim_pages_selector import ZimPagesSelector
 from upload_dokuwiki import upload_files_to_dokuwiki, delete_files_from_dokuwiki
 from pathlib import Path
@@ -85,6 +85,7 @@ class BuildForm(QWidget):
         self.ui.server_lineEdit.setText(project_section.get('server', ''))
         self.ui.username_lineEdit.setText(project_section.get('username', ''))
         self.ui.password_lineEdit.setText(project_section.get('password', ''))
+        self.ui.prefix_lineEdit.setText(project_section.get('prefix', ''))
 
         self.ui.title_lineEdit.setText(project_section.get('title', ''))
         self.ui.author_lineEdit.setText(project_section.get('author', ''))
@@ -97,6 +98,8 @@ class BuildForm(QWidget):
     @catch_value_error
     def upload_selected_files(self) -> None:
         notebook_folder = get_notebook_folder(self)
+        prefix = get_prefix(self)
+        
 
         lwlen = self.ui.pagepath_listWidget.count()
         filepaths = [Path(self.ui.pagepath_listWidget.item(i).text()) for i in range(lwlen)]
@@ -112,10 +115,10 @@ class BuildForm(QWidget):
                 media_files.append(f.read())
 
         dokuwiki_pagepaths = [filepath_to_zim_pagepath(filepath) for filepath in filepaths]
-        dokuwiki_files = [json_to_dokuwiki(content) for content in json_files]
+        dokuwiki_files = [json_to_dokuwiki(content, prefix) for content in json_files]
 
-        pages = dict((pagepath, file) for pagepath, file in zip(dokuwiki_pagepaths, dokuwiki_files))
-        media = dict((pagepath, file) for pagepath, file in zip(media_pagepaths, media_files))
+        pages = dict((prefix + pagepath, file) for pagepath, file in zip(dokuwiki_pagepaths, dokuwiki_files))
+        media = dict((prefix + pagepath, file) for pagepath, file in zip(media_pagepaths, media_files))
 
         credentials = get_credentials(self)
         try:
@@ -132,6 +135,8 @@ class BuildForm(QWidget):
     @catch_value_error
     def delete_selected_files(self):
         notebook_folder = get_notebook_folder(self)
+        prefix = get_prefix(self)
+
 
         lwlen = self.ui.pagepath_listWidget.count()
         filepaths = [Path(self.ui.pagepath_listWidget.item(i).text()) for i in range(lwlen)]
@@ -139,8 +144,8 @@ class BuildForm(QWidget):
         json_files = [zim_filepath_to_json(notebook_folder / filepath) for filepath in filepaths]
 
         media_filepaths = list(set(flatten(get_media_from_json(json_file) for json_file in json_files)))
-        media_pagepaths = [filepath_to_zim_pagepath(filepath, keepSuffix=True) for filepath in media_filepaths]
-        dokuwiki_pagepaths = [filepath_to_zim_pagepath(filepath) for filepath in filepaths]
+        media_pagepaths = [prefix + filepath_to_zim_pagepath(filepath, keepSuffix=True) for filepath in media_filepaths]
+        dokuwiki_pagepaths = [prefix + filepath_to_zim_pagepath(filepath) for filepath in filepaths]
 
         credentials = get_credentials(self)
         try:
@@ -245,6 +250,7 @@ class BuildForm(QWidget):
         project_section['server'] = self.ui.server_lineEdit.text()
         project_section['username'] = self.ui.username_lineEdit.text()
         project_section['password'] = self.ui.password_lineEdit.text()
+        project_section['prefix'] = self.ui.prefix_lineEdit.text()
 
         project_section['title'] = self.ui.title_lineEdit.text()
         project_section['author'] = self.ui.author_lineEdit.text()

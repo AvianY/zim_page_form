@@ -1,8 +1,10 @@
 from genericpath import isfile
+import re
 from PySide2.QtWidgets import QMessageBox
 from configparser import ConfigParser
 from pathlib import Path
 import os
+from zim_tools import zim_pagepath_regex
 
 def get_notebook_folder(buildForm):
     notebook_folder = buildForm.ui.notebook_folder_lineEdit.text().strip()
@@ -90,3 +92,12 @@ def quote(obj):
     if isinstance(obj, list):
         return ['"' + string + '"' for string in obj]
     return '"' + obj + '"'
+
+def get_prefix(buildForm):
+    prefix = buildForm.ui.prefix_lineEdit.text()
+    if prefix != '' and re.match(zim_pagepath_regex, prefix) is None:
+        QMessageBox.warning(buildForm, 'Input error', f'the provided "prefix" field is invalid')
+        return
+    if prefix != '' and prefix[-1] != ':':
+        prefix = prefix + ':'
+    return prefix

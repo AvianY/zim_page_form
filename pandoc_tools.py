@@ -22,7 +22,6 @@ def script_dir():
 
 def zim_filepath_to_json(filepath, filtered=True):
     p = subprocess.run([shutil.which('pandoc'), '-f', 'zimwiki_reader.lua', '-t', 'json', str(filepath)], capture_output=True, cwd=str(script_dir()))
-    print(p.stderr.decode())
     json_file = json.loads(p.stdout.decode())
     if filtered:
         json_file = json_transform_rawblocks_to_codeblocks(json_file)
@@ -53,9 +52,9 @@ def get_media_from_json(json_input: dict) -> List[str]:
     # does not work on raw parsed zimwiki (has to be reanchored)
     return list(set(json_get_media(json_input)))
 
-def json_to_dokuwiki(json_input) -> str:
+def json_to_dokuwiki(json_input, prefix) -> str:
     # does not work on raw parsed zimwiki
-    prepared_json = json.dumps(json_prepare_for_dokuwiki(json_input))
+    prepared_json = json.dumps(json_prepare_for_dokuwiki(json_input, prefix=prefix))
     p = subprocess.run([shutil.which('pandoc'), '-f', 'json', '-t', 'dokuwiki'], input=prepared_json.encode(), capture_output=True, cwd=str(script_dir()))
     return p.stdout.decode()
 
