@@ -78,7 +78,7 @@ end
 
 -- Grammar
 G = P{ "Doc",
-  Doc = Ct(V"Meta"^1)
+  Doc = Ct(V"Meta")
       * Ct(V"Block"^0)
       / function(metadata, blocks)
 	      return pandoc.Pandoc(blocks, metadata[1])
