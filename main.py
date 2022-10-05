@@ -10,7 +10,7 @@ from PySide2.QtCore import QFile
 from dokuwiki import DokuWikiError
 
 from zim_tools import is_zim_file, zim_pagepath_regex, zim_pagepath_to_filepath,  filepath_to_zim_pagepath
-from pandoc_tools import create_pdf_from_json, zim_filepath_to_json, get_media_from_json, json_to_dokuwiki
+from pandoc_tools import create_pdf_from_json, get_rawtexts_from_json, zim_filepath_to_json, get_media_from_json, json_to_dokuwiki
 from buildform_helpers import get_config, get_config_filepath, get_credentials, get_notebook_folder, catch_value_error, get_prefix, get_project_name
 from zim_pages_selector import ZimPagesSelector
 from upload_dokuwiki import upload_files_to_dokuwiki, delete_files_from_dokuwiki
@@ -114,10 +114,18 @@ class BuildForm(QWidget):
             with open(notebook_folder / filepath, 'rb') as f:
                 media_files.append(f.read())
 
+        rawtext_filepaths = list(set(flatten(get_rawtexts_from_json(json_file) for json_file in json_files)))
+        rawtext_absolute_filepaths = [notebook_folder / rawtext_filepath for rawtext_filepath in rawtext_filepaths]
+        rawtext_pagepaths = [filepath_to_zim_pagepath(filepath, keepSuffix=True) for filepath in rawtext_filepaths]
+        rawtext_files = []
+        for filepath in rawtext_absolute_filepaths:
+            with open(notebook_folder / filepath, 'rb') as f:
+                rawtext_files.append(b'<code>' + f.read() + b'</code>')
+
         dokuwiki_pagepaths = [filepath_to_zim_pagepath(filepath) for filepath in filepaths]
         dokuwiki_files = [json_to_dokuwiki(content, prefix) for content in json_files]
 
-        pages = dict((prefix + pagepath, file) for pagepath, file in zip(dokuwiki_pagepaths, dokuwiki_files))
+        pages = dict((prefix + pagepath, file) for pagepath, file in zip(dokuwiki_pagepaths + rawtext_pagepaths, dokuwiki_files + rawtext_files))
         media = dict((prefix + pagepath, file) for pagepath, file in zip(media_pagepaths, media_files))
 
         credentials = get_credentials(self)
@@ -143,13 +151,16 @@ class BuildForm(QWidget):
 
         json_files = [zim_filepath_to_json(notebook_folder / filepath) for filepath in filepaths]
 
+        rawtext_filepaths = list(set(flatten(get_rawtexts_from_json(json_file) for json_file in json_files)))
+        rawtext_pagepaths = [filepath_to_zim_pagepath(filepath, keepSuffix=True) for filepath in rawtext_filepaths]
+
         media_filepaths = list(set(flatten(get_media_from_json(json_file) for json_file in json_files)))
         media_pagepaths = [prefix + filepath_to_zim_pagepath(filepath, keepSuffix=True) for filepath in media_filepaths]
         dokuwiki_pagepaths = [prefix + filepath_to_zim_pagepath(filepath) for filepath in filepaths]
 
         credentials = get_credentials(self)
         try:
-            delete_files_from_dokuwiki(dokuwiki_pagepaths, media_pagepaths, credentials)
+            delete_files_from_dokuwiki(dokuwiki_pagepaths + rawtext_pagepaths, media_pagepaths, credentials)
         except DokuWikiError as err:
             QMessageBox.warning(self, 'Deletion error', f'unable to connect: {err}')
             return

@@ -5,6 +5,17 @@ from typing import List
 
 from typing import List, Optional, Tuple
 
+
+from urllib.parse import urlparse
+
+def is_url(url):
+  try:
+    result = urlparse(url)
+    return all([result.scheme, result.netloc])
+  except ValueError:
+    return False
+
+
 zim_pagepath_regex = re.compile('^([^:#+/]+)(:[^:#+/]+)*$')
 
 zim_pagelink_regex = re.compile('^[:+]?([^:#+/]+)(:[^:#+/]+)*(#[^:#+/]+)?$')

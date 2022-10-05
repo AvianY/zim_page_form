@@ -9,15 +9,16 @@ from pandocfilters import applyJSONFilters, walk, Str
 
 from zim_tools import zim_pagelink_regex, is_url, zim_pagepath_to_filepath
 
-def reduce_media_to_str(key, value, format, meta):
-    if key == 'Image':
-        return Str(value[2][0])
+def reduce_rawtext_path_to_str(key, value, format, meta):
+    if key == 'Link':
+        if not zim_pagelink_regex.match(value[2][0]) and not is_url(value[2][0]):
+            return Str(value[2][0])
     elif key == 'Para':
-        return walk(value, reduce_media_to_str, format, meta)
+        return walk(value, reduce_rawtext_path_to_str, format, meta)
     else:
         return []
 
-def json_get_media(json_input: dict):
+def json_get_rawtext_paths(json_input: dict):
     if 'meta' in json_input:
         meta = json_input['meta']
     elif json_input[0]:  # old API
@@ -25,7 +26,7 @@ def json_get_media(json_input: dict):
     else:
         meta = {}
 
-    altered = walk(json_input, reduce_media_to_str, format, meta)
+    altered = walk(json_input, reduce_rawtext_path_to_str, format, meta)
 
     return [Path(str(block['c'])) for block in altered['blocks']]
     
@@ -38,7 +39,7 @@ if __name__ == '__main__':
     else:
         format = ""
 
-    links = json_get_media(json.loads(source))
+    links = json_get_rawtext_paths(json.loads(source))
 
     for link in links:
         print(link)

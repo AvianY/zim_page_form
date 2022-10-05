@@ -4,6 +4,7 @@ import os
 from typing import List
 import subprocess
 import json
+from json_list_rawtexts import json_get_rawtext_paths
 
 from zim_tools import zim_pagelink_regex
 
@@ -51,6 +52,9 @@ def create_pdf_from_json(json_dict: dict, target_file, pdf_options, notebook_fol
 def get_media_from_json(json_input: dict) -> List[str]:
     # does not work on raw parsed zimwiki (has to be reanchored)
     return list(set(json_get_media(json_input)))
+
+def get_rawtexts_from_json(json_input: dict) -> List[str]:
+    return list(set(json_get_rawtext_paths(json_input)))
 
 def json_to_dokuwiki(json_input, prefix) -> str:
     # does not work on raw parsed zimwiki

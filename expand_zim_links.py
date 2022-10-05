@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import sys, io
-from zim_tools import zimlink_to_pagepath, zim_pagelink_regex, find_notebook_parent_folder
+from zim_tools import filepath_to_zim_pagepath, is_url, zimlink_to_pagepath, zim_pagelink_regex, find_notebook_parent_folder
 from urllib.parse import unquote
 from pandocfilters import walk, Link, Image
 import json
@@ -22,8 +22,12 @@ def expand_zim_links(key, value, format, meta):
     notebook_folder = find_notebook_parent_folder(source_filepath)
     if key == 'Link':
         if zim_pagelink_regex.match(value[2][0]):
-            value[2] = (zimlink_to_pagepath(value[2][0], source_filepath, notebook_folder), '')
+            value[2] = (zimlink_to_pagepath(value[2][0], source_filepath, notebook_folder), value[2][1])
             return Link(*value)
+        elif not is_url(value[2][0]):
+            value[2] = (reanchor_file(value[2][0], source_filepath, notebook_folder), value[2][1])
+            return Link(*value)
+
     elif key == 'Image':
         # attr, caption, image = elem
         # src, title = image
@@ -36,7 +40,7 @@ def expand_zim_links(key, value, format, meta):
 
         # NOTE: I don't know if this should be here. It's not a link...
         if not Path(value[2][0]).is_absolute():
-            value[2] = (reanchor_file(value[2][0], source_filepath, notebook_folder), '')
+            value[2] = (reanchor_file(value[2][0], source_filepath, notebook_folder), value[2][1])
         return Image(*value)
     return None
 
