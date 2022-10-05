@@ -18,7 +18,7 @@ def is_url(url):
 
 zim_pagepath_regex = re.compile('^([^:#+/]+)(:[^:#+/]+)*$')
 
-zim_pagelink_regex = re.compile('^[:+]?([^:#+/]+)(:[^:#+/]+)*(#[^:#+/]+)?$')
+zim_pagelink_regex = re.compile('^[:+]?(:*[^:#+/\\\\]+)*(#?[^:#+/\\\\]+)?$')
 
 zim_extension_inline_code_regex = re.compile('^\[\[([^]|]*)\|CODE:([^]|]*)\]\]$')
 
@@ -61,7 +61,9 @@ def zimlink_to_pagepath_section(link: str, anchor_filepath: Path, notebook_folde
         section = link[pound_idx + 1:]
         link = link[0:pound_idx]
 
-    if link[0] == ':': # absolute link
+    if link == '': # empty link
+        pagepath = filepath_to_zim_pagepath(anchor_filepath)
+    elif link[0] == ':': # absolute link
         link = link[1:]
         pagepath = link
     elif link[0] == '+': # subrelative link

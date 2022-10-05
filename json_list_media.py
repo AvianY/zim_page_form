@@ -14,8 +14,7 @@ def reduce_media_to_str(key, value, format, meta):
         return Str(value[2][0])
     elif key == 'Para':
         return walk(value, reduce_media_to_str, format, meta)
-    else:
-        return []
+    return []
 
 def json_get_media(json_input: dict):
     if 'meta' in json_input:

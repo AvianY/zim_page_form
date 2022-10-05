@@ -119,8 +119,8 @@ class BuildForm(QWidget):
         rawtext_pagepaths = [filepath_to_zim_pagepath(filepath, keepSuffix=True) for filepath in rawtext_filepaths]
         rawtext_files = []
         for filepath in rawtext_absolute_filepaths:
-            with open(notebook_folder / filepath, 'rb') as f:
-                rawtext_files.append(b'<code>' + f.read() + b'</code>')
+            with open(notebook_folder / filepath, 'r') as f:
+                rawtext_files.append(f'<file {filepath.suffix} {filepath.name}>' + f.read() + '</file>')
 
         dokuwiki_pagepaths = [filepath_to_zim_pagepath(filepath) for filepath in filepaths]
         dokuwiki_files = [json_to_dokuwiki(content, prefix) for content in json_files]

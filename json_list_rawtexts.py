@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import List
 import json
 
-from pandocfilters import applyJSONFilters, walk, Str
+from pandocfilters import walk, Str
 
-from zim_tools import zim_pagelink_regex, is_url, zim_pagepath_to_filepath
+from zim_tools import zim_pagelink_regex, is_url
 
 def reduce_rawtext_path_to_str(key, value, format, meta):
     if key == 'Link':
@@ -15,8 +15,7 @@ def reduce_rawtext_path_to_str(key, value, format, meta):
             return Str(value[2][0])
     elif key == 'Para':
         return walk(value, reduce_rawtext_path_to_str, format, meta)
-    else:
-        return []
+    return []
 
 def json_get_rawtext_paths(json_input: dict):
     if 'meta' in json_input:
