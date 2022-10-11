@@ -56,7 +56,7 @@ class BuildForm(QWidget):
 
     def load_ui(self):
         loader = QUiLoader()
-        path = os.path.join(os.path.dirname(__file__), "build_form.ui")
+        path = os.path.join(os.path.dirname(__file__), "ui_files/build_form.ui")
         ui_file = QFile(path)
         ui_file.open(QFile.ReadOnly)
         ui = loader.load(ui_file, self)

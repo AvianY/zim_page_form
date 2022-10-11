@@ -4,17 +4,17 @@ import os
 from typing import List
 import subprocess
 import json
-from json_list_rawtexts import json_get_rawtext_paths
+from printers.json_list_rawtexts import json_get_rawtext_paths
 
 from zim_tools import zim_pagelink_regex
 
 import shutil
 
-from expand_zim_links import json_expand_links
-from include_code_blocks import json_transform_rawblocks_to_codeblocks
-from print_zim_links import json_get_links
-from json_list_media import json_get_media
-from prepare_for_dokuwiki import json_prepare_for_dokuwiki
+from filters.expand_zim_links import json_expand_links
+from filters.include_code_blocks import json_transform_rawblocks_to_codeblocks
+from printers.print_zim_links import json_get_links
+from printers.json_list_media import json_get_media
+from filters.prepare_for_dokuwiki import json_prepare_for_dokuwiki
 
 
 def script_dir():

@@ -9,7 +9,7 @@ from PySide2.QtCore import QFile
 from pathlib import Path
 
 from zim_tools import find_zim_pagepaths, filepath_to_zim_pagepath
-from get_page_dependencies import get_page_dependencies
+from printers.get_page_dependencies import get_page_dependencies
 
 
 class ZimPagesSelector(QWidget):
@@ -36,7 +36,7 @@ class ZimPagesSelector(QWidget):
 
     def load_ui(self):
         loader = QUiLoader()
-        path = os.path.join(os.path.dirname(__file__), "zim_pages_selector.ui")
+        path = os.path.join(os.path.dirname(__file__), "ui_files/zim_pages_selector.ui")
         ui_file = QFile(path)
         ui_file.open(QFile.ReadOnly)
         ui = loader.load(ui_file, self)
