@@ -22,7 +22,8 @@ def script_dir():
 
 
 def zim_filepath_to_json(filepath, filtered=True):
-    p = subprocess.run([shutil.which('pandoc'), '-f', 'zimwiki_reader.lua', '-t', 'json', str(filepath)], capture_output=True, cwd=str(script_dir()))
+    CREATE_NO_WINDOW = 0x08000000
+    p = subprocess.run([shutil.which('pandoc'), '-f', 'zimwiki_reader.lua', '-t', 'json', str(filepath)], capture_output=True, cwd=str(script_dir()), creationflags=CREATE_NO_WINDOW)
     json_file = json.loads(p.stdout.decode())
     if filtered:
         json_file = json_transform_rawblocks_to_codeblocks(json_file)
@@ -46,7 +47,8 @@ def get_links_from_zim_filepath(filepath, zim_pages_only):
 
 def create_pdf_from_json(json_dict: dict, target_file, pdf_options, notebook_folder) -> None:
     json_file: str = json.dumps(json_dict)
-    p = subprocess.run(['pandoc', '-f', 'json', '-t', 'pdf', '--pdf-engine=xelatex', '-o', target_file] + pdf_options, input=json_file.encode(), cwd=notebook_folder)
+    CREATE_NO_WINDOW = 0x08000000
+    p = subprocess.run(['pandoc', '-f', 'json', '-t', 'pdf', '--pdf-engine=xelatex', '-o', target_file] + pdf_options, input=json_file.encode(), cwd=notebook_folder, creationflags=CREATE_NO_WINDOW)
     p.check_returncode()
 
 def get_media_from_json(json_input: dict) -> List[str]:
@@ -59,6 +61,7 @@ def get_rawtexts_from_json(json_input: dict) -> List[str]:
 def json_to_dokuwiki(json_input, prefix) -> str:
     # does not work on raw parsed zimwiki
     prepared_json = json.dumps(json_prepare_for_dokuwiki(json_input, prefix=prefix))
-    p = subprocess.run([shutil.which('pandoc'), '-f', 'json', '-t', 'dokuwiki'], input=prepared_json.encode(), capture_output=True, cwd=str(script_dir()))
+    CREATE_NO_WINDOW = 0x08000000
+    p = subprocess.run([shutil.which('pandoc'), '-f', 'json', '-t', 'dokuwiki'], input=prepared_json.encode(), capture_output=True, cwd=str(script_dir()), creationflags=CREATE_NO_WINDOW)
     return p.stdout.decode()
 
