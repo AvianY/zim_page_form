@@ -2,6 +2,7 @@
 launch.json
 
 *.user
+*.user.*
 *.conf
 
 build/
