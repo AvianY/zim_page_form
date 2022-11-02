@@ -1,7 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import os, re, sys
 from typing import Optional
-from venv import create
 from xmlrpc.client import ResponseError
 from PySide2.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox
 from PySide2.QtUiTools import QUiLoader
@@ -19,7 +18,6 @@ from configparser import ConfigParser
 from argparse import ArgumentParser
 import itertools
 import json
-
 
 
 def flatten(l):
@@ -193,7 +191,8 @@ class BuildForm(QWidget):
             '--metadata', 'lang:' + self.ui.languages_lineEdit.text(),
             '--metadata', 'geometry: ' + self.ui.margin_lineEdit.text(),
             '--metadata', 'block-headings:true',
-            '--metadata', 'document-class:report'
+            '--metadata', 'document-class:report',
+            '--pdf-engine', self.ui.pdf_engine.currentText()
         ]
 
         if self.ui.table_of_contents_checkBox.isChecked():
@@ -270,6 +269,7 @@ class BuildForm(QWidget):
         project_section['languages'] = self.ui.languages_lineEdit.text()
         project_section['margin'] = self.ui.margin_lineEdit.text()
         project_section['table_of_contents'] = 'true' if self.ui.table_of_contents_checkBox.isChecked() else 'false'
+        project_section['pdf_engine'] = self.ui.pdf_engine_comboBox.currentText()
         
         with open(config_filepath, 'w') as f:
             notebook_folder_config.write(f)

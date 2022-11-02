@@ -50,7 +50,7 @@ def get_links_from_zim_filepath(filepath, zim_pages_only):
 
 def create_pdf_from_json(json_dict: dict, target_file, pdf_options, notebook_folder) -> None:
     json_file: str = json.dumps(json_dict)
-    p = subprocess_run(['pandoc', '-f', 'json', '-t', 'pdf', '--pdf-engine=xelatex', '-o', target_file] + pdf_options, input=json_file.encode(), cwd=notebook_folder)
+    p = subprocess_run(['pandoc', '-f', 'json', '-t', 'pdf', '-o', target_file] + pdf_options, input=json_file.encode(), cwd=notebook_folder)
     p.check_returncode()
 
 def get_media_from_json(json_input: dict) -> List[str]:

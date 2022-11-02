@@ -1,19 +1,19 @@
 import configparser
 import os, re
 from pathlib import Path
-from typing import List
 
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 
 from urllib.parse import urlparse
 
+
 def is_url(url):
-  try:
-    result = urlparse(url)
-    return all([result.scheme, result.netloc])
-  except ValueError:
-    return False
+    try:
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+    except ValueError:
+        return False
 
 
 zim_pagepath_regex = re.compile('^([^:#+/]+)(:[^:#+/]+)*$')
@@ -72,7 +72,7 @@ def zimlink_to_pagepath_section(link: str, anchor_filepath: Path, notebook_folde
     else: # relative link
         relative_path = find_first_relative_filepath(anchor_filepath, zim_pagepath_to_filepath(link), notebook_folder)
         pagepath = filepath_to_zim_pagepath(relative_path)
-    
+
     return pagepath, section
 
 def zimlink_to_pagepath(link, source_filepath, notebook_folder) -> str:
