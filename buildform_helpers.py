@@ -84,7 +84,7 @@ def catch_value_error(func):
         try:
             return func(*args, **kwargs)
         except ValueError as err:
-            print(f"{func.__name__} failed:", err)
+            QMessageBox.warning(None, f"{func.__name__} failed", str(err))
     return inner_function
 
 

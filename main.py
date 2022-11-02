@@ -192,17 +192,13 @@ class BuildForm(QWidget):
             '--metadata', 'geometry: ' + self.ui.margin_lineEdit.text(),
             '--metadata', 'block-headings:true',
             '--metadata', 'document-class:report',
-            '--pdf-engine', self.ui.pdf_engine.currentText()
+            '--pdf-engine', self.ui.pdf_engine_comboBox.currentText()
         ]
 
         if self.ui.table_of_contents_checkBox.isChecked():
             pdf_options.append('--table-of-contents')
 
-        try:
-            create_pdf_from_json(merged_json_dict, notebook_folder / 'documentation.pdf', pdf_options, str(notebook_folder))
-        except:
-            QMessageBox.information(self, 'Failure', 'Could not generate the pdf.')
-            return
+        create_pdf_from_json(merged_json_dict, notebook_folder / 'documentation.pdf', pdf_options, str(notebook_folder))
         QMessageBox.information(self, 'Success', 'The pdf was successfully created.')
 
     @catch_value_error

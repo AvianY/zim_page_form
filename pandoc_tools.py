@@ -9,6 +9,7 @@ from printers.json_list_rawtexts import json_get_rawtext_paths
 from zim_tools import zim_pagelink_regex
 
 import shutil
+from PySide2.QtWidgets import QMessageBox
 
 from filters.expand_zim_links import json_expand_links
 from filters.include_code_blocks import json_transform_rawblocks_to_codeblocks
@@ -23,6 +24,11 @@ def subprocess_run(args, input=None, cwd=os.path.dirname(os.path.abspath(__file_
         p = subprocess.run(args, capture_output=True, input=input, cwd=cwd, creationflags=CREATE_NO_WINDOW)
     else:
         p = subprocess.run(args, capture_output=True, input=input, cwd=cwd)
+    
+    if p.returncode != 0:
+        raise ValueError(p.stderr.decode())
+    if p.stderr.decode() != '':
+        QMessageBox.warning(None, f"PDF generation warning", p.stderr.decode())
     return p
     
 def zim_filepath_to_json(filepath, filtered=True):
