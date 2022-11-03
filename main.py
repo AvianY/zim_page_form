@@ -93,6 +93,9 @@ class BuildForm(QWidget):
         self.ui.margin_lineEdit.setText(project_section.get('margin', ''))
         self.ui.table_of_contents_checkBox.setChecked(True if project_section.get('table_of_contents') == 'yes' else False)
 
+        pdf_engine_index = self.ui.pdf_engine_comboBox.findText(project_section.get('pdf_engine'))
+        self.ui.pdf_engine_comboBox.setCurrentIndex(0 if pdf_engine_index == -1 else pdf_engine_index)
+
     @catch_value_error
     def upload_selected_files(self) -> None:
         notebook_folder = get_notebook_folder(self)
