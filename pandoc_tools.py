@@ -24,7 +24,7 @@ def subprocess_run(args, input=None, cwd=os.path.dirname(os.path.abspath(__file_
         p = subprocess.run(args, capture_output=True, input=input, cwd=cwd, creationflags=CREATE_NO_WINDOW)
     else:
         p = subprocess.run(args, capture_output=True, input=input, cwd=cwd)
-    
+
     if p.returncode != 0:
         raise ValueError(p.stderr.decode())
     if p.stderr.decode() != '':

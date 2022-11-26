@@ -91,6 +91,7 @@ class BuildForm(QWidget):
         self.ui.keywords_lineEdit.setText(project_section.get('keywords', ''))
         self.ui.languages_lineEdit.setText(project_section.get('languages', ''))
         self.ui.margin_lineEdit.setText(project_section.get('margin', ''))
+        self.ui.dpi_lineEdit.setText(project_section.get('dpi', '200'))
         self.ui.table_of_contents_checkBox.setChecked(True if project_section.get('table_of_contents') == 'yes' else False)
 
         pdf_engine_index = self.ui.pdf_engine_comboBox.findText(project_section.get('pdf_engine'))
@@ -195,7 +196,8 @@ class BuildForm(QWidget):
             '--metadata', 'geometry: ' + self.ui.margin_lineEdit.text(),
             '--metadata', 'block-headings:true',
             '--metadata', 'document-class:report',
-            '--pdf-engine', self.ui.pdf_engine_comboBox.currentText()
+            '--pdf-engine', self.ui.pdf_engine_comboBox.currentText(),
+            '--dpi', self.ui.dpi_lineEdit.text()
         ]
 
         if self.ui.table_of_contents_checkBox.isChecked():
@@ -269,6 +271,7 @@ class BuildForm(QWidget):
         project_section['margin'] = self.ui.margin_lineEdit.text()
         project_section['table_of_contents'] = 'true' if self.ui.table_of_contents_checkBox.isChecked() else 'false'
         project_section['pdf_engine'] = self.ui.pdf_engine_comboBox.currentText()
+        project_section['dpi'] = self.ui.dpi_lineEdit.currentText()
         
         with open(config_filepath, 'w') as f:
             notebook_folder_config.write(f)
