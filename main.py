@@ -271,7 +271,7 @@ class BuildForm(QWidget):
         project_section['margin'] = self.ui.margin_lineEdit.text()
         project_section['table_of_contents'] = 'true' if self.ui.table_of_contents_checkBox.isChecked() else 'false'
         project_section['pdf_engine'] = self.ui.pdf_engine_comboBox.currentText()
-        project_section['dpi'] = self.ui.dpi_lineEdit.currentText()
+        project_section['dpi'] = self.ui.dpi_lineEdit.text()
         
         with open(config_filepath, 'w') as f:
             notebook_folder_config.write(f)
