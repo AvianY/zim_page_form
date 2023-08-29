@@ -85,6 +85,7 @@ class BuildForm(QWidget):
         self.ui.password_lineEdit.setText(project_section.get('password', ''))
         self.ui.prefix_lineEdit.setText(project_section.get('prefix', ''))
 
+        self.ui.output_filename_lineEdit.setText(project_section.get('output_filename', ''))
         self.ui.title_lineEdit.setText(project_section.get('title', ''))
         self.ui.author_lineEdit.setText(project_section.get('author', ''))
         self.ui.date_lineEdit.setText(project_section.get('date', ''))
@@ -178,6 +179,10 @@ class BuildForm(QWidget):
         notebook_folder = get_notebook_folder(self)
         lwlen = self.ui.pagepath_listWidget.count()
 
+        if self.ui.output_filename_lineEdit.text() == '':
+            QMessageBox.warning(self, 'Missing filename error', f'An output filename was not provided.')
+            return
+
         filepaths = [Path(self.ui.pagepath_listWidget.item(i).text()) for i in range(lwlen)]
 
         json_dicts = [zim_filepath_to_json(notebook_folder / filepath) for filepath in filepaths]
@@ -203,7 +208,8 @@ class BuildForm(QWidget):
         if self.ui.table_of_contents_checkBox.isChecked():
             pdf_options.append('--table-of-contents')
 
-        create_pdf_from_json(merged_json_dict, notebook_folder / 'documentation.pdf', pdf_options, str(notebook_folder))
+        output_filename = self.ui.output_filename_lineEdit.text()
+        create_pdf_from_json(merged_json_dict, notebook_folder / output_filename, pdf_options, str(notebook_folder))
         QMessageBox.information(self, 'Success', 'The pdf was successfully created.')
 
     @catch_value_error
@@ -263,6 +269,7 @@ class BuildForm(QWidget):
         project_section['password'] = self.ui.password_lineEdit.text()
         project_section['prefix'] = self.ui.prefix_lineEdit.text()
 
+        project_section['output_filename'] = self.ui.output_filename_lineEdit.text()
         project_section['title'] = self.ui.title_lineEdit.text()
         project_section['author'] = self.ui.author_lineEdit.text()
         project_section['date'] = self.ui.date_lineEdit.text()
