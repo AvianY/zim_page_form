@@ -29,8 +29,6 @@ class ZimPagesSelector(QWidget):
         filepaths = [str(filepath.relative_to(notebook_folder)) for filepath in find_zim_pagepaths(notebook_folder)]
         for i in range(len(filepaths)):
             item = QStandardItem(filepaths[i])
-            item.setFlags(item.flags() ^ Qt.ItemIsDropEnabled)
-            item.setFlags(item.flags() ^ Qt.ItemIsDragEnabled)
             self.model.appendRow(item)
         self.ui.listView.setModel(self.model)
 
@@ -47,7 +45,8 @@ class ZimPagesSelector(QWidget):
         self.ui.listView.setSelectionMode(self.ui.listView.MultiSelection)
         for i in range(self.model.rowCount()):
             item = self.model.item(i, 0)
-            item.setFlags(item.flags() ^ Qt.ItemIsDragEnabled)
+            flags = Qt.ItemFlags(int(item.flags()) | int(Qt.ItemIsDragEnabled))
+            item.setFlags(flags)
         
 
     def set_single_select(self):
@@ -55,7 +54,8 @@ class ZimPagesSelector(QWidget):
         self.ui.listView.clearSelection()
         for i in range(self.model.rowCount()):
             item = self.model.item(i, 0)
-            item.setFlags(item.flags() | Qt.ItemIsDragEnabled)
+            flags = Qt.ItemFlags(int(item.flags()) & ~int(Qt.ItemIsDragEnabled))
+            item.setFlags(flags)
 
     def remove_unselected(self):
         if self.ui.listView.selectionMode() != self.ui.listView.MultiSelection:
@@ -82,6 +82,7 @@ class ZimPagesSelector(QWidget):
             page_dependencies = get_page_dependencies([filepath_to_zim_pagepath(selected_filepath)], self.notebook_folder, self.notebook_folder)
             self.parent.ui.pagepath_listWidget.addItems([str(dependency.relative_to(self.notebook_folder)) for dependency in page_dependencies])
         else:
-            self.parent.ui.pagepath_listWidget.addItems(index.data() for index in selected_indexes)
+            selected_files = list(index.data() for index in selected_indexes)
+            self.parent.ui.pagepath_listWidget.addItems(selected_files)
         
         self.close()
